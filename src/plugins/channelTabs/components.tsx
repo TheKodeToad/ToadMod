@@ -145,23 +145,20 @@ function ChannelContextMenu(props: { channelInfo: ChannelProps, pos: number, upd
 }
 
 function ChannelTabContent(props: ChannelProps & { guild?: Guild, channel?: Channel; }) {
-    const { guild, channel, channelId } = props;
+    const { guild, guildId, channel, channelId } = props;
     const recipients = channel?.recipients;
     const [unreadCount, mentionCount] = useStateFromStores(
         [ReadStateStore],
         (): [number, number] => [ReadStateStore.getUnreadCount(props.channelId), ReadStateStore.getMentionCount(props.channelId)],
         null, (_, newState) => newState.every(i => i !== 0)
     );
-    if (props.guildId === "@me") return <>
-        <FriendsIcon height={24} width={24} />
-        <Text className={cl("channel-name-text")}>Friends</Text>
-    </>;
-    if (props.guildId === "@favorites") return <>
-        <GuildIcon guild={GuildStore.getGuild(channel!.guild_id)} />
-        <Text className={cl("channel-name-text")}>#{channel?.name}</Text>
-        <NotificationDot unreadCount={unreadCount} mentionCount={mentionCount} />
-        <TypingIndicator channelId={props.channelId} />
-    </>;
+    if (guildId === "@favorites")
+        return <>
+            <GuildIcon guild={GuildStore.getGuild(channel!.guild_id)} />
+            <Text className={cl("channel-name-text")}>#{channel?.name}</Text>
+            <NotificationDot unreadCount={unreadCount} mentionCount={mentionCount} />
+            <TypingIndicator channelId={props.channelId} />
+        </>;
     if (guild) {
         if (channel)
             return <>
@@ -207,7 +204,14 @@ function ChannelTabContent(props: ChannelProps & { guild?: Guild, channel?: Chan
             </>;
         }
     }
-    else return <>
+
+    if (guildId === "@me" || guildId === undefined)
+        return <>
+            <FriendsIcon height={24} width={24} />
+            <Text className={cl("channel-name-text")}>Friends</Text>
+        </>;
+
+    return <>
         <QuestionIcon height={24} width={24} />
         <Text className={cl("channel-name-text")}>Unknown</Text>
     </>;
