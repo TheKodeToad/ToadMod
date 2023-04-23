@@ -145,7 +145,7 @@ function ChannelContextMenu(props: { channelInfo: ChannelProps, pos: number, upd
 }
 
 function ChannelTabContent(props: ChannelProps & { guild?: Guild, channel?: Channel; }) {
-    const { guild, channel } = props;
+    const { guild, channel, channelId } = props;
     const recipients = channel?.recipients;
     const [unreadCount, mentionCount] = useStateFromStores(
         [ReadStateStore],
@@ -162,12 +162,33 @@ function ChannelTabContent(props: ChannelProps & { guild?: Guild, channel?: Chan
         <NotificationDot unreadCount={unreadCount} mentionCount={mentionCount} />
         <TypingIndicator channelId={props.channelId} />
     </>;
-    if (guild && channel) return <>
-        <GuildIcon guild={guild} />
-        <Text variant="text-md/semibold" className={cl("channel-name-text")}>#{channel?.name}</Text>
-        <NotificationDot unreadCount={unreadCount} mentionCount={mentionCount} />
-        <TypingIndicator channelId={channel?.id} />
-    </>;
+    if (guild) {
+        if (channel)
+            return <>
+                <GuildIcon guild={guild} />
+                <Text variant="text-md/semibold" className={cl("channel-name-text")}>#{channel?.name}</Text>
+                <NotificationDot unreadCount={unreadCount} mentionCount={mentionCount} />
+                <TypingIndicator channelId={channel?.id} />
+            </>;
+        else {
+            let name = "Unknown (" + channelId + ")";
+            switch (channelId) {
+                case "customize-community":
+                    name = "Channels & Roles";
+                    break;
+                case "channel-browser":
+                    name = "Browse Channels";
+                    break;
+                case "@home":
+                    name = "Server Guide";
+                    break;
+            }
+            return <>
+                <GuildIcon guild={guild} />
+                <Text variant="text-md/semibold" className={cl("channel-name-text")}>{name}</Text>
+            </>;
+        }
+    }
     if (channel && recipients?.length) {
         if (channel.type === ChannelTypes.DM) {
             const user = UserStore.getUser(recipients[0]);
