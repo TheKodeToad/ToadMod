@@ -323,36 +323,12 @@ export function ChannelsTabsContainer(props: ChannelProps & { userId: string; })
         }} className={classes(cl("button"), cl("new-button"))}><PlusIcon /></button>
     </div >;
 }
-const PreviewTab = ({ channelId, guildId }: ChannelProps) => {
-    const cl = (n: string) => `vc-channeltabs-preview-${n}`;
-    if (guildId === "@me") return <div className={cl("tab")}>
-        <FriendsIcon height={24} width={24} />
-        <Text variant="text-sm/semibold" className={cl("text")}>Friends</Text>
-    </div>;
-    const channel = ChannelStore.getChannel(channelId);
-    const guild = GuildStore.getGuild(guildId);
-    const recipients = channel?.recipients;
-    if (channel && guild) return <div className={cl("tab")}>
-        <GuildIcon guild={guild} />
-        <Text variant="text-sm/semibold" className={cl("text")}>#{channel.name}</Text>
-    </div>;
-    else if (recipients?.length) {
-        if (recipients.length === 1) {
-            const user = UserStore.getUser(recipients[0]);
-            return <div className={cl("tab")}>
-                <UserAvatar user={user} />
-                <Text variant="text-sm/semibold" className={cl("text")}>@{user?.username}</Text>
-            </div>;
-        } else {
-            return <div className={cl("tab")}>
-                <ChannelIcon channel={channel} />
-                <Text variant="text-sm/semibold" className={cl("text")}>{channel?.name || "Group DM"}</Text>
-            </div>;
-        }
-    }
-    return <div className={cl("tab")}>
-        <QuestionIcon height={24} width={24} />;
-        <Text variant="text-sm/semibold" className={cl("text")}>{guildId}/{channelId}</Text>
+const PreviewTab = (props: ChannelProps) => {
+    const guild = GuildStore.getGuild(props.guildId);
+    const channel = ChannelStore.getChannel(props.channelId);
+
+    return <div className={cl("preview-tab")}>
+        <ChannelTabContent {...props} guild={guild} channel={channel} />
     </div>;
 };
 export function ChannelTabsPreivew(p) {
