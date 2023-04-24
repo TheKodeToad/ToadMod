@@ -91,7 +91,7 @@ function TypingIndicator(props: { channelId: string; }) {
 const getDotWidth = findByCodeLazy("<10?16:");
 const styles = findByPropsLazy("numberBadge");
 const NotificationDot = ({ unreadCount, mentionCount }: { unreadCount: number, mentionCount: number; }) => {
-    return unreadCount > 0 &&
+    return unreadCount > 0 ?
         <div
             className={classes(styles.numberBadge, styles.baseShapeRound)}
             style={{
@@ -100,7 +100,7 @@ const NotificationDot = ({ unreadCount, mentionCount }: { unreadCount: number, m
             }}
         >
             {mentionCount || unreadCount}
-        </div>;
+        </div> : null;
 };
 function ChannelContextMenu(props: { channelInfo: ChannelProps, pos: number, update: () => void; }) {
     const { channelInfo, pos, update } = props;
