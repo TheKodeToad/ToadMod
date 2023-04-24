@@ -92,7 +92,7 @@ const channelContextMenuPatch: NavContextMenuPatchCallback = (children, props) =
 export default definePlugin({
     name: "ChannelTabs",
     description: "Group your commonly visited channels in tabs, like a browser",
-    authors: [Devs.TheSun],
+    authors: [Devs.TheSun, Devs.TheKodeToad],
     dependencies: ["ContextMenuAPI"],
     patches: [
         // add the channel tab container at the top

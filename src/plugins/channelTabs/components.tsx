@@ -301,7 +301,7 @@ export function ChannelsTabsContainer(props: ChannelProps & { userId: string; })
             onContextMenu={e => ContextMenu.open(e, () => <ChannelContextMenu channelInfo={ch} pos={i} update={update} />)}
         >
             <button className={classes(cl("button"), cl("channel-info"))} onMouseDown={event => {
-                if (event.button != 0)
+                if (event.button !== 0)
                     return;
 
                 moveToTab(i);
