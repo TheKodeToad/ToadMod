@@ -42,7 +42,6 @@ const ReadStateUtils = mapMangledModuleLazy('"ENABLE_AUTOMATIC_ACK",', {
     markAsRead: filters.byCode(".getActiveJoinedThreadsForParent")
 });
 
-const twoChars = (n: number) => n > 99 ? "9+" : `${n}`;
 const cl = (name: string) => `vc-channeltabs-${name}`;
 
 const QuestionIcon = LazyComponent(() => findByCode("M12 2C6.486 2 2 6.487"));
@@ -93,7 +92,7 @@ const NotificationDot = ({ unreadCount, mentionCount }: { unreadCount: number, m
     let classes = cl("notification-dot");
     if (mentionCount) classes += ` ${cl("has-mention")}`;
     return unreadCount > 0 ? <Text className={classes}>
-        {twoChars(mentionCount || unreadCount)}
+        {mentionCount || unreadCount}
     </Text> : null;
 };
 function ChannelContextMenu(props: { channelInfo: ChannelProps, pos: number, update: () => void; }) {
