@@ -248,19 +248,10 @@ export function ChannelsTabsContainer(props: ChannelProps & { userId: string; })
     const { openChannels } = ChannelTabsUtils;
     if (!openChannels.length) openStartupTabs(props, update);
     function handleKeybinds(e: KeyboardEvent) {
-        if (["ArrowLeft", "ArrowRight"].includes(e.key)) {
-            const direction = e.key === "ArrowLeft" ? -1 : 1;
-            if (e.ctrlKey && e.shiftKey) {
-                // TODO: implement
-            }
-            else if (e.ctrlKey) {
-                moveToTabRelative(direction);
-                update();
-            }
-            else if (e.shiftKey) {
-                shiftCurrentTab(direction);
-                update();
-            }
+        if (e.key === "Tab" && e.ctrlKey) {
+            const direction = e.shiftKey ? -1 : 1;
+            moveToTabRelative(direction);
+            update();
         }
         // Ctrl+T is taken by discord
         else if (["N", "n"].includes(e.key) && e.ctrlKey) {

@@ -163,18 +163,13 @@ export default definePlugin({
         <Flex flexDirection="row">
             <Forms.FormSection>
                 <Forms.FormTitle>Switch between tabs</Forms.FormTitle>
-                <Keybind shortcut="mod+left" />
-                <Keybind shortcut="mod+right" />
+                <Keybind shortcut="mod+tab" />
+                <Keybind shortcut="mod+tab" />
             </Forms.FormSection>
             <Forms.FormSection>
                 <Forms.FormTitle>Switch between tabs with unreads</Forms.FormTitle>
                 <Keybind shortcut="ctrl+shift+left" />
-                <Keybind shortcut="ctrl+shfit+right" />
-            </Forms.FormSection>
-            <Forms.FormSection>
-                <Forms.FormTitle>Move tabs around</Forms.FormTitle>
-                <Keybind shortcut="shift+left" />
-                <Keybind shortcut="shfit+right" />
+                <Keybind shortcut="ctrl+shift+right" />
             </Forms.FormSection>
             <Forms.FormSection>
                 <Forms.FormTitle>Open and close tabs</Forms.FormTitle>
