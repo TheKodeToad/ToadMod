@@ -20,7 +20,7 @@ import "./style.css";
 
 import { Flex } from "@components/Flex.jsx";
 import { classes, LazyComponent, useForceUpdater } from "@utils/misc.jsx";
-import { filters, find, findByCode, mapMangledModuleLazy } from "@webpack";
+import { filters, find, findByCode, findByCodeLazy, findByPropsLazy, mapMangledModuleLazy } from "@webpack";
 import {
     Button, ChannelStore, ContextMenu, FluxDispatcher, Forms, GuildStore, Menu, ReadStateStore, Text, TypingStore,
     useDrag, useDrop, useEffect, UserStore, useState, useStateFromStores
@@ -88,12 +88,19 @@ function TypingIndicator(props: { channelId: string; }) {
         ? <div style={{ marginLeft: 6 }}><ThreeDots dotRadius={3} themed={true} /></div>
         : null;
 }
+const getDotWidth = findByCodeLazy("<10?16:");
+const styles = findByPropsLazy("numberBadge");
 const NotificationDot = ({ unreadCount, mentionCount }: { unreadCount: number, mentionCount: number; }) => {
-    let classes = cl("notification-dot");
-    if (mentionCount) classes += ` ${cl("has-mention")}`;
-    return unreadCount > 0 ? <Text className={classes}>
-        {mentionCount || unreadCount}
-    </Text> : null;
+    return unreadCount > 0 &&
+        <div
+            className={classes(styles.numberBadge, styles.baseShapeRound)}
+            style={{
+                backgroundColor: mentionCount ? "var(--status-danger)" : "var(--brand-experiment)",
+                width: getDotWidth(mentionCount || unreadCount)
+            }}
+        >
+            {mentionCount || unreadCount}
+        </div>;
 };
 function ChannelContextMenu(props: { channelInfo: ChannelProps, pos: number, update: () => void; }) {
     const { channelInfo, pos, update } = props;
