@@ -19,8 +19,8 @@
 import "./style.css";
 
 import { Flex } from "@components/Flex.jsx";
-import { classes, LazyComponent, useForceUpdater } from "@utils/misc.jsx";
-import { filters, find, findByCode, findByCodeLazy, findByPropsLazy, mapMangledModuleLazy } from "@webpack";
+import { LazyComponent, useForceUpdater } from "@utils/misc.jsx";
+import { filters, find, findByCode, findByCodeLazy, findByPropsLazy, findStoreLazy, mapMangledModuleLazy } from "@webpack";
 import {
     Button, ChannelStore, ContextMenu, FluxDispatcher, Forms, GuildStore, Menu, ReadStateStore, Text, TypingStore,
     useDrag, useDrop, useEffect, UserStore, useState, useStateFromStores
@@ -38,9 +38,15 @@ enum ChannelTypes {
     DM = 1,
     GROUP_DM = 3
 }
+const ChannelNameEmojisStore = findStoreLazy("ChannelNameEmojisStore");
+// also takes a channel param, but isn't used anywhere within the function
+const useChannelEmojiBgColor: (emoji: string) => any = findByCodeLazy('="#607D8B";');
 const ReadStateUtils = mapMangledModuleLazy('"ENABLE_AUTOMATIC_ACK",', {
     markAsRead: filters.byCode(".getActiveJoinedThreadsForParent")
 });
+const QuestionIcon = LazyComponent(() => findByCode("M12 2C6.486 2 2 6.487"));
+const FriendsIcon = LazyComponent(() => findByCode("M0.5,0 L0.5,1.5 C0.5,5.65"));
+const Emoji = LazyComponent(() => findByCode(".autoplay,allowAnimatedEmoji:"));
 
 const cl = (name: string) => `vc-channeltabs-${name}`;
 
@@ -74,19 +80,14 @@ const ChannelIcon = ({ channel }: { channel: Channel; }) =>
     />;
 
 const ThreeDots = LazyComponent(() => find(m => m.type?.render?.toString()?.includes(".dots")));
-function TypingIndicator(props: { channelId: string; }) {
-    const { channelId } = props;
-    const hasTypingIndicatorPlugin = Vencord.Plugins.isPluginEnabled("TypingIndicator");
-    const currentUserId = UserStore.getCurrentUser().id;
-    const isTyping = useStateFromStores(
-        [TypingStore],
-        (): boolean => !!((Object.keys(TypingStore.getTypingUsers(channelId)) as string[]).filter(id => id !== currentUserId).length),
-        null, (old, newer) => !hasTypingIndicatorPlugin && (old && !newer || !old && newer)
-    );
-    if (hasTypingIndicatorPlugin) return (Vencord.Plugins.plugins.TypingIndicator as any).TypingIndicator(channelId);
-    else return isTyping
-        ? <div style={{ marginLeft: 6 }}><ThreeDots dotRadius={3} themed={true} /></div>
-        : null;
+function TypingIndicator(props: { channelId: string, isTyping: boolean; }) {
+    const { channelId, isTyping } = props;
+    if (Vencord.Plugins.isPluginEnabled("TypingIndicator"))
+        return (Vencord.Plugins.plugins.TypingIndicator as any).TypingIndicator(channelId);
+    else
+        return isTyping
+            ? <div style={{ marginLeft: 6 }}><ThreeDots dotRadius={3} themed={true} /></div>
+            : null;
 }
 const getDotWidth = findByCodeLazy("<10?16:");
 const styles = findByPropsLazy("numberBadge");
@@ -102,6 +103,13 @@ const NotificationDot = ({ unreadCount, mentionCount }: { unreadCount: number, m
             {mentionCount || unreadCount}
         </div> : null;
 };
+function ChannelEmoji({ emoji }: { emoji: string | undefined; }) {
+    if (!emoji || !channelTabsSettings.store.channelNameEmojis) return null;
+    const backgroundColor = useChannelEmojiBgColor(emoji);
+    return <div className={cl("emoji-container")} style={{ backgroundColor }}>
+        <Emoji emojiName={emoji} className={cl("emoji")} />
+    </div>;
+}
 function ChannelContextMenu(props: { channelInfo: ChannelProps, pos: number, update: () => void; }) {
     const { channelInfo, pos, update } = props;
     const channel = ChannelStore.getChannel(channelInfo.channelId);
@@ -152,26 +160,39 @@ function ChannelContextMenu(props: { channelInfo: ChannelProps, pos: number, upd
 
 function ChannelTabContent(props: ChannelProps & { guild?: Guild, channel?: Channel; }) {
     const { guild, guildId, channel, channelId } = props;
+    const userId = UserStore.getCurrentUser()?.id;
     const recipients = channel?.recipients;
-    const [unreadCount, mentionCount] = useStateFromStores(
-        [ReadStateStore],
-        (): [number, number] => [ReadStateStore.getUnreadCount(props.channelId), ReadStateStore.getMentionCount(props.channelId)],
-        null, (_, newState) => newState.every(i => i !== 0)
+    const [unreadCount, mentionCount, isTyping, channelEmoji] = useStateFromStores(
+        [ReadStateStore, TypingStore, ChannelNameEmojisStore],
+        () => [
+            ReadStateStore.getUnreadCount(props.channelId) as number,
+            ReadStateStore.getMentionCount(props.channelId) as number,
+            !!((Object.keys(TypingStore.getTypingUsers(props.channelId)) as string[]).filter(id => id !== userId).length),
+            (props.channel
+                ? ChannelNameEmojisStore.getGuildChannelEmojis(props.guildId)?.[props.channel.name?.toLowerCase()]
+                : undefined
+            ) as string | undefined
+        ],
+        null,
+        // is this necessary?
+        (o, n) => o[0] === n[0] && o[1] === n[1] && o[2] === n[2] && o[3] === n[3]
     );
     if (guildId === "@favorites")
         return <>
             <GuildIcon guild={GuildStore.getGuild(channel!.guild_id)} />
+            <ChannelEmoji emoji={channelEmoji} />
             <Text className={cl("channel-name-text")}>#{channel?.name}</Text>
             <NotificationDot unreadCount={unreadCount} mentionCount={mentionCount} />
-            <TypingIndicator channelId={props.channelId} />
+            <TypingIndicator channelId={props.channelId} isTyping={isTyping} />
         </>;
     if (guild) {
         if (channel)
             return <>
                 <GuildIcon guild={guild} />
+                <ChannelEmoji emoji={channelEmoji} />
                 <Text className={cl("channel-name-text")}>#{channel?.name}</Text>
                 <NotificationDot unreadCount={unreadCount} mentionCount={mentionCount} />
-                <TypingIndicator channelId={channel?.id} />
+                <TypingIndicator channelId={channel?.id} isTyping={isTyping} />
             </>;
         else {
             let name = "Unknown (" + channelId + ")";
@@ -199,14 +220,14 @@ function ChannelTabContent(props: ChannelProps & { guild?: Guild, channel?: Chan
                 <UserAvatar user={user} />
                 <Text className={cl("channel-name-text")}>@{user?.username}</Text>
                 <NotificationDot unreadCount={unreadCount} mentionCount={mentionCount} />
-                <TypingIndicator channelId={props.channelId} />
+                <TypingIndicator channelId={props.channelId} isTyping={isTyping} />
             </>;
         } else { // Group DM
             return <>
                 <ChannelIcon channel={channel} />
                 <Text className={cl("channel-name-text")}>{channel?.name || "Group DM"}</Text>
                 <NotificationDot unreadCount={unreadCount} mentionCount={mentionCount} />
-                <TypingIndicator channelId={props.channelId} />
+                <TypingIndicator channelId={props.channelId} isTyping={isTyping} />
             </>;
         }
     }
@@ -259,10 +280,9 @@ export function ChannelsTabsContainer(props: ChannelProps & { userId: string; })
             update();
         }
         else if (["W", "w"].includes(e.key) && e.ctrlKey) {
-            if (openChannels.length > 1) closeCurrentTab();
+            closeCurrentTab();
             update();
         }
-
     }
     useEffect(() => {
         document.addEventListener("keydown", handleKeybinds);
@@ -330,7 +350,7 @@ export function ChannelTabsPreivew(p) {
     const { tabSet }: { tabSet: { [userId: string]: ChannelProps[]; }; } = channelTabsSettings.use();
     const placeholder = [{ guildId: "@me", channelId: undefined as any }];
 
-    const [currentTabs, setCurrentTabs] = useState(tabSet[id] ?? placeholder);
+    const [currentTabs, setCurrentTabs] = useState(tabSet?.[id] ?? placeholder);
     return <>
         <Forms.FormTitle>Startup tabs</Forms.FormTitle>
         <Flex flexDirection="row" style={{ gap: "2px" }}>
